@@ -19,7 +19,7 @@ export const GenerationProgress: React.FC<GenerationProgressProps> = ({ progress
     const currentMessage = messages[messageIndex];
 
     return (
-        <div className="flex flex-col items-center justify-center text-center p-8 bg-gray-800/50 rounded-lg border border-gray-700">
+        <div className="flex flex-col items-center justify-center text-center w-full">
             <h3 className="text-xl font-semibold text-gray-200 mb-4">
                 Generating Your Styles
             </h3>

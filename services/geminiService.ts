@@ -22,20 +22,19 @@ const fileToBase64 = (file: File): Promise<{mimeType: string, data: string}> => 
     });
 };
 
-const getPrompt = (style: string): string => {
-    const basePrompt = `Take the outfit from image 2 and place it on the male character from image 1, keeping his original face and facial features unchanged. Create this as a bright, high-resolution (4K) realistic photo. The character is a 28-year-old Moroccan man, 1.75 m tall, 80kg, with a mesomorph build (balanced, confident frame). He has short dark brown curly hair in a mid-fade haircut, a compact neck, green-brown eyes, and a neatly trimmed goatee. His arms have a light natural hair. He is wearing the clothes from image 2. The hairstyle, body proportions, and skin tone should be natural and consistent with his background.`;
+const getPrompt = (variation: string): string => {
+    const basePrompt = `Task: Generate an ultra-realistic, 4K resolution photograph.
+Subject: Combine the person from image 1 with the outfit from image 2.
+Key instructions:
+- The person's face, facial features, and likeness from image 1 must be perfectly preserved.
+- The outfit from image 2 should be seamlessly and realistically placed on the person.
+- The final image must be exceptionally detailed, with sharp focus, and look like it was taken with a professional DSLR camera. It must be 4K quality.
+- Person details: The character is a 28-year-old Moroccan man, 1.75 m tall, 80kg, with a mesomorph build (balanced, confident frame). He has short dark brown curly hair in a mid-fade haircut, a compact neck, green-brown eyes, and a neatly trimmed goatee. His arms have a light natural hair.
+- Consistency: Maintain natural body proportions, skin tone, and hairstyle consistent with the person in image 1.`;
 
-    const stylePrompts: { [key: string]: string } = {
-        'Casual': 'The setting is a modern, sunlit apartment with minimalist decor. The pose is relaxed and confident.',
-        'Formal': 'The setting is an elegant event hall with soft, ambient lighting. The pose is poised and sophisticated.',
-        'Studio Portrait': 'The background is a professional studio setting with a solid, neutral color (like charcoal gray). Lighting is dramatic and focused to highlight the outfit and subject.',
-        'Outdoor Casual': 'The setting is an urban street-style scene, possibly in a trendy city district with interesting architecture in the background. The lighting is natural daylight.',
-        'Evening Wear': 'The setting is a luxurious rooftop lounge at dusk, with city lights blurred in the background (bokeh effect). The atmosphere is glamorous and upscale.',
-    };
+    const setting = 'The setting is a modern, sunlit apartment with minimalist decor.';
 
-    const styleSuffix = stylePrompts[style] || stylePrompts['Casual'];
-
-    return `${basePrompt} ${styleSuffix} The final result should look like a lifelike, professional photo.`;
+    return `${basePrompt}\nSetting: ${setting}\nShot type: ${variation}\nEmphasize realism and high-fidelity detail in every aspect of the final photograph.`;
 };
 
 
@@ -63,23 +62,27 @@ export const generateStyledImages = async (
         },
     };
     
-    const styles = [
-        'Casual',
-        'Formal',
-        'Studio Portrait',
-        'Outdoor Casual',
-        'Evening Wear'
+    const variations = [
+        'A full-body shot, with the character standing in a relaxed, confident pose.',
+        'A close-up portrait shot, focusing on the details of the face and the upper part of the outfit.',
+        'A medium shot from the waist up, with the character leaning against a wall.',
+        'The character is sitting comfortably on a modern sofa in the apartment.',
+        'A wide-angle shot that captures more of the minimalist apartment interior.',
+        'A mirror selfie taken in a stylish, full-length mirror within the apartment.',
+        'A dynamic, low-angle shot looking up at the character to make the pose feel powerful.',
+        'A profile shot (from the side) showcasing the silhouette of the outfit.',
+        'An over-the-shoulder perspective, as if someone is looking at the character from behind.',
+        'A shot with a slightly blurred foreground element (like a plant) to create depth of field, focusing on the character.'
     ];
 
     const generatedImages: string[] = [];
     const totalImages = 10;
 
     for (let i = 0; i < totalImages; i++) {
-        // Cycle through the styles to create a mix
-        const currentStyle = styles[i % styles.length];
+        const currentVariation = variations[i];
         
         const textPart = {
-            text: getPrompt(currentStyle),
+            text: getPrompt(currentVariation),
         };
 
         const response = await ai.models.generateContent({

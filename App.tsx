@@ -76,13 +76,13 @@ const App: React.FC = () => {
 
     return (
         <div className="min-h-screen text-white p-4 sm:p-8 font-sans">
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto pb-40">
                 <header className="text-center mb-10">
                     <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 pb-2">
                         AI Style Fusion
                     </h1>
                     <p className="mt-4 text-lg text-gray-300 max-w-2xl mx-auto">
-                        Upload your photo and an outfit. Our AI will create 10 realistic images of you wearing it in a variety of styles.
+                        Upload your photo and an outfit. Our AI will create 10 realistic images of you wearing it from different angles and poses.
                     </p>
                 </header>
 
@@ -120,12 +120,6 @@ const App: React.FC = () => {
                         )}
                     </div>
 
-                    {isLoading && (
-                        <div className="mb-8">
-                           <GenerationProgress progress={progress} />
-                        </div>
-                    )}
-
                     {error && (
                         <div className="text-center p-4 mb-8 bg-red-900/50 border border-red-700 text-red-200 rounded-lg max-w-2xl mx-auto">
                             <p className="font-bold text-lg">An Error Occurred</p>
@@ -142,6 +136,16 @@ const App: React.FC = () => {
                     <p>Powered by Google Gemini</p>
                 </footer>
             </div>
+
+            {isLoading && (
+                <div className="fixed bottom-0 left-0 right-0 w-full z-50">
+                    <div className="bg-gray-900/80 backdrop-blur-md border-t border-gray-700 shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
+                        <div className="max-w-7xl mx-auto p-4 sm:p-6">
+                            <GenerationProgress progress={progress} />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
