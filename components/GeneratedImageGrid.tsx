@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface GeneratedImageGridProps {
@@ -13,13 +12,22 @@ const DownloadIcon: React.FC = () => (
 
 export const GeneratedImageGrid: React.FC<GeneratedImageGridProps> = ({ images }) => {
     return (
-        <section>
+        <section className="fade-in">
             <h2 className="text-3xl font-bold text-center mb-8 mt-12 text-gray-200">Your New Styles</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                 {images.map((imageSrc, index) => (
-                    <div key={index} className="group relative rounded-lg overflow-hidden shadow-2xl transform transition-transform duration-300 hover:scale-105">
-                        <img src={imageSrc} alt={`Generated style ${index + 1}`} className="w-full h-auto aspect-[3/4] object-cover" />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity duration-300 flex items-center justify-center">
+                    <div 
+                        key={index} 
+                        className="group relative rounded-lg overflow-hidden shadow-2xl transform transition-transform duration-300 hover:scale-105 fade-in"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                        <img 
+                            src={imageSrc} 
+                            alt={`Generated style ${index + 1}`} 
+                            className="w-full h-auto aspect-[3/4] object-cover bg-gray-800"
+                            loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-opacity duration-300 flex items-center justify-center">
                             <a
                                 href={imageSrc}
                                 download={`ai-style-${index + 1}.png`}

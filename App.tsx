@@ -1,8 +1,7 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { GeneratedImageGrid } from './components/GeneratedImageGrid';
-import { Spinner } from './components/Spinner';
+import { GenerationProgress } from './components/GenerationProgress';
 import { generateStyledImages } from './services/geminiService';
 
 const App: React.FC = () => {
@@ -13,6 +12,7 @@ const App: React.FC = () => {
     const [generatedImages, setGeneratedImages] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [progress, setProgress] = useState<number>(0);
 
     const handlePersonImageChange = useCallback((file: File | null) => {
         setPersonImage(file);
@@ -42,10 +42,14 @@ const App: React.FC = () => {
         setIsLoading(true);
         setError(null);
         setGeneratedImages([]);
+        setProgress(0);
 
         try {
-            const images = await generateStyledImages(personImage, outfitImage);
-            setGeneratedImages(images);
+            const onImageGenerated = (newImage: string, p: number) => {
+                setGeneratedImages(prev => [...prev, newImage]);
+                setProgress(p);
+            };
+            await generateStyledImages(personImage, outfitImage, onImageGenerated);
         } catch (err) {
             console.error(err);
             setError("Failed to generate images. Please check the console for details and try again.");
@@ -54,59 +58,78 @@ const App: React.FC = () => {
         }
     };
 
+    const handleStartOver = () => {
+        setPersonImage(null);
+        setOutfitImage(null);
+        if (personImagePreview) URL.revokeObjectURL(personImagePreview);
+        if (outfitImagePreview) URL.revokeObjectURL(outfitImagePreview);
+        setPersonImagePreview(null);
+        setOutfitImagePreview(null);
+        setGeneratedImages([]);
+        setIsLoading(false);
+        setError(null);
+        setProgress(0);
+    };
+
     const canGenerate = useMemo(() => personImage && outfitImage && !isLoading, [personImage, outfitImage, isLoading]);
+    const showStartOver = personImage || outfitImage || generatedImages.length > 0 || isLoading || error;
 
     return (
-        <div className="bg-gray-900 min-h-screen text-white p-4 sm:p-8 font-sans">
+        <div className="min-h-screen text-white p-4 sm:p-8 font-sans">
             <div className="max-w-7xl mx-auto">
                 <header className="text-center mb-10">
-                    <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-600">
+                    <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 pb-2">
                         AI Style Fusion
                     </h1>
-                    <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
-                        Upload your photo and an outfit. Our AI will create 10 realistic images of you wearing it.
+                    <p className="mt-4 text-lg text-gray-300 max-w-2xl mx-auto">
+                        Upload your photo and an outfit. Our AI will create 10 realistic images of you wearing it in a variety of styles.
                     </p>
                 </header>
 
-                <main>
+                <main className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-4 sm:p-8 border border-gray-700/50 shadow-2xl">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <ImageUploader 
                             id="person-image"
-                            label="Your Photo (Image 1)"
+                            label="Your Photo"
                             onImageChange={handlePersonImageChange}
                             imagePreview={personImagePreview}
                         />
                         <ImageUploader 
                             id="outfit-image"
-                            label="Outfit Photo (Image 2)"
+                            label="Outfit Photo"
                             onImageChange={handleOutfitImageChange}
                             imagePreview={outfitImagePreview}
                         />
                     </div>
                     
-                    <div className="text-center mb-8">
+                    <div className="text-center mb-8 flex flex-col items-center gap-4">
                         <button
                             onClick={handleGenerate}
                             disabled={!canGenerate}
-                            className="px-8 py-4 bg-indigo-600 text-white font-bold text-lg rounded-lg shadow-lg hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50"
+                            className="w-full max-w-xs px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-lg rounded-lg shadow-lg hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed disabled:shadow-none transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50"
                         >
                             {isLoading ? 'Generating...' : 'Generate Your Style'}
                         </button>
+                        {showStartOver && (
+                             <button
+                                onClick={handleStartOver}
+                                className="px-6 py-2 bg-gray-700 text-gray-300 font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                            >
+                                Start Over
+                            </button>
+                        )}
                     </div>
 
                     {isLoading && (
-                        <div className="flex flex-col items-center justify-center text-center p-8 bg-gray-800 rounded-lg">
-                            <Spinner />
-                            <p className="mt-4 text-lg text-gray-300">
-                                Crafting your new looks... This may take a few moments.
-                            </p>
+                        <div className="mb-8">
+                           <GenerationProgress progress={progress} />
                         </div>
                     )}
 
                     {error && (
-                        <div className="text-center p-4 bg-red-900 border border-red-700 text-red-200 rounded-lg">
-                            <p className="font-bold">An Error Occurred</p>
-                            <p>{error}</p>
+                        <div className="text-center p-4 mb-8 bg-red-900/50 border border-red-700 text-red-200 rounded-lg max-w-2xl mx-auto">
+                            <p className="font-bold text-lg">An Error Occurred</p>
+                            <p className="mt-1">{error}</p>
                         </div>
                     )}
                     
