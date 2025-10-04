@@ -56,7 +56,7 @@ const variations = [
     'A mirror selfie taken in a stylish, full-length mirror within the apartment.',
     'A dynamic, low-angle shot looking up at the character to make the pose feel powerful.',
     'A profile shot (from the side) showcasing the silhouette of the outfit.',
-    'A mirror selfie, with the character sitting on the floor or a low stool.',
+    'A hyper-realistic vertical (3:4) mirror selfie of the person sitting on a marble floor in a morning sunbeam. One leg is bent, the other stretched out. They are holding an iPhone near their face to take the picture. Behind them is a wall with Batman graffiti. The image must have sharp focus, 8K quality, warm cinematic light, and an urban cool vibe.',
     'A shot with a slightly blurred foreground element (like a plant) to create depth of field, focusing on the character.'
 ];
 
@@ -65,10 +65,16 @@ const getPrompt = (variation: string, style: string): string => {
 Subject: Combine the person from image 1 with the outfit from image 2.
 Key instructions:
 - The person's face, facial features, and likeness from image 1 must be perfectly preserved.
-- The outfit from image 2 should be seamlessly and realistically placed on the person.
+- The outfit from image 2 should be seamlessly and realistically placed on the person. The top from the outfit should be worn untucked with an oversized fit (like a size M).
+- The person's expression must be neutral or serious. Do not show them smiling or showing teeth.
 - The final image must be exceptionally detailed, with sharp focus, and look like it was taken with a professional DSLR camera. It must be 4K quality.
 - Person details: The character is a medium-sized Moroccan man in his late 20s. He is approximately 1.75m tall and 80kg. His hair is short, dark, and curly, and he has a neatly trimmed goatee. All of his features must perfectly match the person in image 1.
 - Consistency: Maintain natural body proportions, skin tone, and hairstyle consistent with the person in image 1.`;
+
+    // The Batman graffiti variation is highly specific and should not include a style-based setting.
+    if (variation.includes('Batman graffiti')) {
+        return `${basePrompt}\nShot type: ${variation}\nEmphasize realism and high-fidelity detail in every aspect of the final photograph.`;
+    }
 
     const setting = styleSettings[style] || styleSettings['Casual'];
 
