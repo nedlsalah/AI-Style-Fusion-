@@ -22,7 +22,15 @@ const fileToBase64 = (file: File): Promise<{mimeType: string, data: string}> => 
     });
 };
 
-const getPrompt = (variation: string): string => {
+const styleSettings: { [key: string]: string } = {
+    'Casual': 'The setting is a modern, sunlit apartment with minimalist decor.',
+    'Formal': 'The setting is an elegant event hall with chandeliers and classic architecture.',
+    'Studio Portrait': 'The setting is a professional photography studio with a neutral grey backdrop and studio lighting.',
+    'Outdoor Casual': 'The setting is a vibrant city street with interesting architecture and soft, natural afternoon light.',
+    'Evening Wear': 'The setting is a sophisticated rooftop bar at night, with city lights in the background.'
+};
+
+const getPrompt = (variation: string, style: string): string => {
     const basePrompt = `Task: Generate an ultra-realistic, 4K resolution photograph.
 Subject: Combine the person from image 1 with the outfit from image 2.
 Key instructions:
@@ -32,7 +40,7 @@ Key instructions:
 - Person details: The character is a 28-year-old Moroccan man, 1.75 m tall, 80kg, with a mesomorph build (balanced, confident frame). He has short dark brown curly hair in a mid-fade haircut, a compact neck, green-brown eyes, and a neatly trimmed goatee. His arms have a light natural hair.
 - Consistency: Maintain natural body proportions, skin tone, and hairstyle consistent with the person in image 1.`;
 
-    const setting = 'The setting is a modern, sunlit apartment with minimalist decor.';
+    const setting = styleSettings[style] || styleSettings['Casual'];
 
     return `${basePrompt}\nSetting: ${setting}\nShot type: ${variation}\nEmphasize realism and high-fidelity detail in every aspect of the final photograph.`;
 };
@@ -41,6 +49,7 @@ Key instructions:
 export const generateStyledImages = async (
     personImageFile: File, 
     outfitImageFile: File,
+    style: string,
     onImageGenerated: (imageUrl: string, progress: number) => void
 ): Promise<string[]> => {
     const [personImageData, outfitImageData] = await Promise.all([
@@ -82,7 +91,7 @@ export const generateStyledImages = async (
         const currentVariation = variations[i];
         
         const textPart = {
-            text: getPrompt(currentVariation),
+            text: getPrompt(currentVariation, style),
         };
 
         const response = await ai.models.generateContent({

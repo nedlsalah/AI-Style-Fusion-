@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { GeneratedImageGrid } from './components/GeneratedImageGrid';
 import { GenerationProgress } from './components/GenerationProgress';
+import { StyleSelector } from './components/StyleSelector';
 import { generateStyledImages } from './services/geminiService';
 
 const App: React.FC = () => {
@@ -13,6 +14,7 @@ const App: React.FC = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState<number>(0);
+    const [selectedStyle, setSelectedStyle] = useState<string>('Casual');
 
     const handlePersonImageChange = useCallback((file: File | null) => {
         setPersonImage(file);
@@ -49,7 +51,7 @@ const App: React.FC = () => {
                 setGeneratedImages(prev => [...prev, newImage]);
                 setProgress(p);
             };
-            await generateStyledImages(personImage, outfitImage, onImageGenerated);
+            await generateStyledImages(personImage, outfitImage, selectedStyle, onImageGenerated);
         } catch (err) {
             console.error(err);
             setError("Failed to generate images. Please check the console for details and try again.");
@@ -69,6 +71,7 @@ const App: React.FC = () => {
         setIsLoading(false);
         setError(null);
         setProgress(0);
+        setSelectedStyle('Casual');
     };
 
     const canGenerate = useMemo(() => personImage && outfitImage && !isLoading, [personImage, outfitImage, isLoading]);
@@ -101,6 +104,8 @@ const App: React.FC = () => {
                             imagePreview={outfitImagePreview}
                         />
                     </div>
+
+                    <StyleSelector selectedStyle={selectedStyle} onStyleChange={setSelectedStyle} />
                     
                     <div className="text-center mb-8 flex flex-col items-center gap-4">
                         <button
@@ -128,7 +133,7 @@ const App: React.FC = () => {
                     )}
                     
                     {generatedImages.length > 0 && (
-                        <GeneratedImageGrid images={generatedImages} />
+                        <GeneratedImageGrid images={generatedImages} selectedStyle={selectedStyle} />
                     )}
                 </main>
 

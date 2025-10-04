@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface GeneratedImageGridProps {
     images: string[];
+    selectedStyle: string;
 }
 
 const DownloadIcon: React.FC = () => (
@@ -10,7 +11,32 @@ const DownloadIcon: React.FC = () => (
     </svg>
 );
 
-export const GeneratedImageGrid: React.FC<GeneratedImageGridProps> = ({ images }) => {
+const CheckIcon: React.FC = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+);
+
+export const GeneratedImageGrid: React.FC<GeneratedImageGridProps> = ({ images, selectedStyle }) => {
+    const [confirmedDownloadIndex, setConfirmedDownloadIndex] = useState<number | null>(null);
+
+    const handleDownload = (imageSrc: string, index: number) => {
+        if (confirmedDownloadIndex === index) return;
+
+        const link = document.createElement('a');
+        link.href = imageSrc;
+        const styleSlug = selectedStyle.toLowerCase().replace(/\s+/g, '-');
+        link.download = `ai-style-${styleSlug}-${index + 1}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setConfirmedDownloadIndex(index);
+        setTimeout(() => {
+            setConfirmedDownloadIndex(null);
+        }, 2000);
+    };
+
     return (
         <section className="fade-in">
             <h2 className="text-3xl font-bold text-center mb-8 mt-12 text-gray-200">Your New Styles</h2>
@@ -28,14 +54,23 @@ export const GeneratedImageGrid: React.FC<GeneratedImageGridProps> = ({ images }
                             loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-opacity duration-300 flex items-center justify-center">
-                            <a
-                                href={imageSrc}
-                                download={`ai-style-${index + 1}.png`}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700"
+                            <button
+                                onClick={() => handleDownload(imageSrc, index)}
+                                disabled={confirmedDownloadIndex === index}
+                                className="opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:bg-green-600 disabled:opacity-100"
                             >
-                                <DownloadIcon />
-                                Download
-                            </a>
+                                {confirmedDownloadIndex === index ? (
+                                    <>
+                                        <CheckIcon />
+                                        Downloaded!
+                                    </>
+                                ) : (
+                                    <>
+                                        <DownloadIcon />
+                                        Download
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 ))}
