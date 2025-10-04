@@ -3,7 +3,7 @@ import { ImageUploader } from './components/ImageUploader';
 import { GeneratedImageGrid } from './components/GeneratedImageGrid';
 import { GenerationProgress } from './components/GenerationProgress';
 import { StyleSelector } from './components/StyleSelector';
-import { generateStyledImages } from './services/geminiService';
+import { generateStyledImages, generateSingleStyledImage } from './services/geminiService';
 
 const App: React.FC = () => {
     const [personImage, setPersonImage] = useState<File | null>(null);
@@ -59,6 +59,28 @@ const App: React.FC = () => {
             setIsLoading(false);
         }
     };
+    
+    const handleRedoImage = useCallback(async (index: number) => {
+        if (!personImage || !outfitImage) return;
+        
+        try {
+            const newImageUrl = await generateSingleStyledImage(
+                personImage,
+                outfitImage,
+                selectedStyle,
+                index
+            );
+            setGeneratedImages(prevImages => {
+                const newImages = [...prevImages];
+                newImages[index] = newImageUrl;
+                return newImages;
+            });
+        } catch (err) {
+            console.error(err);
+            setError(`Failed to redo image ${index + 1}. Please try again.`);
+        }
+    }, [personImage, outfitImage, selectedStyle]);
+
 
     const handleStartOver = () => {
         setPersonImage(null);
@@ -133,7 +155,11 @@ const App: React.FC = () => {
                     )}
                     
                     {generatedImages.length > 0 && (
-                        <GeneratedImageGrid images={generatedImages} selectedStyle={selectedStyle} />
+                        <GeneratedImageGrid 
+                            images={generatedImages} 
+                            selectedStyle={selectedStyle}
+                            onRedo={handleRedoImage}
+                        />
                     )}
                 </main>
 

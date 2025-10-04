@@ -26,9 +26,22 @@ const styleSettings: { [key: string]: string } = {
     'Casual': 'The setting is a modern, sunlit apartment with minimalist decor.',
     'Formal': 'The setting is an elegant event hall with chandeliers and classic architecture.',
     'Studio Portrait': 'The setting is a professional photography studio with a neutral grey backdrop and studio lighting.',
-    'Outdoor Casual': 'The setting is a vibrant city street with interesting architecture and soft, natural afternoon light.',
+    'Outdoor Casual': 'The setting is a vibrant street in the UAE, showcasing the modern architecture of Dubai or the cultural landmarks of Abu Dhabi, with soft, natural afternoon light.',
     'Evening Wear': 'The setting is a sophisticated rooftop bar at night, with city lights in the background.'
 };
+
+const variations = [
+    'A full-body shot, with the character standing in a relaxed, confident pose.',
+    'A close-up portrait shot, focusing on the details of the face and the upper part of the outfit.',
+    'A medium shot from the waist up, with the character leaning against a wall.',
+    'The character is sitting comfortably on a modern sofa in the apartment.',
+    'A wide-angle shot that captures more of the minimalist apartment interior.',
+    'A mirror selfie taken in a stylish, full-length mirror within the apartment.',
+    'A dynamic, low-angle shot looking up at the character to make the pose feel powerful.',
+    'A profile shot (from the side) showcasing the silhouette of the outfit.',
+    'An over-the-shoulder perspective, as if someone is looking at the character from behind.',
+    'A shot with a slightly blurred foreground element (like a plant) to create depth of field, focusing on the character.'
+];
 
 const getPrompt = (variation: string, style: string): string => {
     const basePrompt = `Task: Generate an ultra-realistic, 4K resolution photograph.
@@ -45,6 +58,53 @@ Key instructions:
     return `${basePrompt}\nSetting: ${setting}\nShot type: ${variation}\nEmphasize realism and high-fidelity detail in every aspect of the final photograph.`;
 };
 
+export const generateSingleStyledImage = async (
+    personImageFile: File,
+    outfitImageFile: File,
+    style: string,
+    variationIndex: number
+): Promise<string> => {
+    const [personImageData, outfitImageData] = await Promise.all([
+        fileToBase64(personImageFile),
+        fileToBase64(outfitImageFile)
+    ]);
+
+    const personImagePart = {
+        inlineData: {
+            mimeType: personImageData.mimeType,
+            data: personImageData.data,
+        },
+    };
+
+    const outfitImagePart = {
+        inlineData: {
+            mimeType: outfitImageData.mimeType,
+            data: outfitImageData.data,
+        },
+    };
+    
+    const textPart = {
+        text: getPrompt(variations[variationIndex], style),
+    };
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: {
+            parts: [personImagePart, outfitImagePart, textPart],
+        },
+        config: {
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
+        },
+    });
+    
+    const imagePart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
+    if (imagePart?.inlineData) {
+        const { data, mimeType } = imagePart.inlineData;
+        return `data:${mimeType};base64,${data}`;
+    } else {
+        throw new Error(`API response for redo image did not contain an image part.`);
+    }
+};
 
 export const generateStyledImages = async (
     personImageFile: File, 
@@ -71,19 +131,6 @@ export const generateStyledImages = async (
         },
     };
     
-    const variations = [
-        'A full-body shot, with the character standing in a relaxed, confident pose.',
-        'A close-up portrait shot, focusing on the details of the face and the upper part of the outfit.',
-        'A medium shot from the waist up, with the character leaning against a wall.',
-        'The character is sitting comfortably on a modern sofa in the apartment.',
-        'A wide-angle shot that captures more of the minimalist apartment interior.',
-        'A mirror selfie taken in a stylish, full-length mirror within the apartment.',
-        'A dynamic, low-angle shot looking up at the character to make the pose feel powerful.',
-        'A profile shot (from the side) showcasing the silhouette of the outfit.',
-        'An over-the-shoulder perspective, as if someone is looking at the character from behind.',
-        'A shot with a slightly blurred foreground element (like a plant) to create depth of field, focusing on the character.'
-    ];
-
     const generatedImages: string[] = [];
     const totalImages = 10;
 
