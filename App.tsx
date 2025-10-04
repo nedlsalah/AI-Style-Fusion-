@@ -14,7 +14,8 @@ const App: React.FC = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState<number>(0);
-    const [selectedStyle, setSelectedStyle] = useState<string>('Casual');
+    const [selectedBaseStyle, setSelectedBaseStyle] = useState<string>('Casual');
+    const [selectedAccentStyle, setSelectedAccentStyle] = useState<string>('None');
 
     const handlePersonImageChange = useCallback((file: File | null) => {
         setPersonImage(file);
@@ -51,7 +52,7 @@ const App: React.FC = () => {
                 setGeneratedImages(prev => [...prev, newImage]);
                 setProgress(p);
             };
-            await generateStyledImages(personImage, outfitImage, selectedStyle, onImageGenerated);
+            await generateStyledImages(personImage, outfitImage, selectedBaseStyle, selectedAccentStyle, onImageGenerated);
         } catch (err) {
             console.error(err);
             const errorMessage = err instanceof Error ? err.message : "An unknown error occurred. Please check the console for details.";
@@ -68,7 +69,8 @@ const App: React.FC = () => {
             const newImageUrl = await generateSingleStyledImage(
                 personImage,
                 outfitImage,
-                selectedStyle,
+                selectedBaseStyle,
+                selectedAccentStyle,
                 index
             );
             setGeneratedImages(prevImages => {
@@ -82,7 +84,7 @@ const App: React.FC = () => {
             const errorMessage = err instanceof Error ? err.message : "An unknown error occurred while redoing the image.";
             setError(errorMessage);
         }
-    }, [personImage, outfitImage, selectedStyle]);
+    }, [personImage, outfitImage, selectedBaseStyle, selectedAccentStyle]);
 
 
     const handleStartOver = () => {
@@ -96,7 +98,8 @@ const App: React.FC = () => {
         setIsLoading(false);
         setError(null);
         setProgress(0);
-        setSelectedStyle('Casual');
+        setSelectedBaseStyle('Casual');
+        setSelectedAccentStyle('None');
     };
 
     const canGenerate = useMemo(() => personImage && outfitImage && !isLoading, [personImage, outfitImage, isLoading]);
@@ -130,7 +133,12 @@ const App: React.FC = () => {
                         />
                     </div>
 
-                    <StyleSelector selectedStyle={selectedStyle} onStyleChange={setSelectedStyle} />
+                    <StyleSelector 
+                        selectedBaseStyle={selectedBaseStyle}
+                        onBaseStyleChange={setSelectedBaseStyle}
+                        selectedAccentStyle={selectedAccentStyle}
+                        onAccentStyleChange={setSelectedAccentStyle}
+                    />
                     
                     <div className="text-center mb-8 flex flex-col items-center gap-4">
                         <button
@@ -160,7 +168,8 @@ const App: React.FC = () => {
                     {generatedImages.length > 0 && (
                         <GeneratedImageGrid 
                             images={generatedImages} 
-                            selectedStyle={selectedStyle}
+                            baseStyle={selectedBaseStyle}
+                            accentStyle={selectedAccentStyle}
                             onRedo={handleRedoImage}
                         />
                     )}

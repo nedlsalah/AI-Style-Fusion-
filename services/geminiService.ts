@@ -60,7 +60,7 @@ const variations = [
     'Depth-of-field shot with blurred foreground\nA plant, light flare, or soft object in the foreground adds depth. The man stands or sits behind it, sharply in focus, his mouth closed and eyes calm. The outfit catches subtle highlights, and the framing feels intimate — like a candid glimpse into a quiet, stylish moment.'
 ];
 
-const getPrompt = (variation: string, style: string): string => {
+const getPrompt = (variation: string, baseStyle: string, accentStyle: string): string => {
     const basePrompt = `Task: Generate an ultra-realistic, 4K resolution photograph.
 Subject: Combine the person from image 1 with the outfit from image 2.
 Key instructions:
@@ -71,15 +71,22 @@ Key instructions:
 - Person details: The character is a medium-sized Moroccan man in his late 20s. He is approximately 1.75m tall and 80kg. His hair is short, dark, and curly, and he has a neatly trimmed goatee. All of his features must perfectly match the person in image 1.
 - Consistency: Maintain natural body proportions, skin tone, and hairstyle consistent with the person in image 1.`;
     
-    const setting = styleSettings[style] || styleSettings['Casual'];
+    const baseSetting = styleSettings[baseStyle] || styleSettings['Casual'];
+    let setting = `Setting: ${baseSetting}`;
 
-    return `${basePrompt}\nSetting: ${setting}\nShot type: ${variation}\nEmphasize realism and high-fidelity detail in every aspect of the final photograph.`;
+    if (accentStyle && accentStyle !== 'None' && styleSettings[accentStyle]) {
+        const accentSetting = styleSettings[accentStyle];
+        setting = `Setting: The primary setting is: "${baseSetting}". Blend this with subtle, complementary accent elements inspired by the following style: "${accentSetting}". The fusion should feel natural and cohesive, enhancing the main environment.`;
+    }
+
+    return `${basePrompt}\n${setting}\nShot type: ${variation}\nEmphasize realism and high-fidelity detail in every aspect of the final photograph.`;
 };
 
 export const generateSingleStyledImage = async (
     personImageFile: File,
     outfitImageFile: File,
-    style: string,
+    baseStyle: string,
+    accentStyle: string,
     variationIndex: number
 ): Promise<string> => {
     const [personImageData, outfitImageData] = await Promise.all([
@@ -102,7 +109,7 @@ export const generateSingleStyledImage = async (
     };
     
     const textPart = {
-        text: getPrompt(variations[variationIndex], style),
+        text: getPrompt(variations[variationIndex], baseStyle, accentStyle),
     };
 
     try {
@@ -136,7 +143,8 @@ export const generateSingleStyledImage = async (
 export const generateStyledImages = async (
     personImageFile: File, 
     outfitImageFile: File,
-    style: string,
+    baseStyle: string,
+    accentStyle: string,
     onImageGenerated: (imageUrl: string, progress: number) => void
 ): Promise<string[]> => {
     const [personImageData, outfitImageData] = await Promise.all([
@@ -165,7 +173,7 @@ export const generateStyledImages = async (
         const currentVariation = variations[i];
         
         const textPart = {
-            text: getPrompt(currentVariation, style),
+            text: getPrompt(currentVariation, baseStyle, accentStyle),
         };
         
         try {

@@ -3,7 +3,8 @@ import { Spinner } from './Spinner';
 
 interface GeneratedImageGridProps {
     images: string[];
-    selectedStyle: string;
+    baseStyle: string;
+    accentStyle: string;
     onRedo: (index: number) => Promise<void>;
 }
 
@@ -33,7 +34,7 @@ const SmallSpinner: React.FC = () => (
     </svg>
 );
 
-export const GeneratedImageGrid: React.FC<GeneratedImageGridProps> = ({ images, selectedStyle, onRedo }) => {
+export const GeneratedImageGrid: React.FC<GeneratedImageGridProps> = ({ images, baseStyle, accentStyle, onRedo }) => {
     const [confirmedDownloadIndex, setConfirmedDownloadIndex] = useState<number | null>(null);
     const [redoingIndex, setRedoingIndex] = useState<number | null>(null);
 
@@ -42,8 +43,16 @@ export const GeneratedImageGrid: React.FC<GeneratedImageGridProps> = ({ images, 
 
         const link = document.createElement('a');
         link.href = imageSrc;
-        const styleSlug = selectedStyle.toLowerCase().replace(/\s+/g, '-');
-        link.download = `ai-style-${styleSlug}-${index + 1}.png`;
+        
+        const baseSlug = baseStyle.toLowerCase().replace(/\s+/g, '-');
+        let filename = `ai-style-${baseSlug}-${index + 1}.png`;
+
+        if (accentStyle && accentStyle !== 'None') {
+            const accentSlug = accentStyle.toLowerCase().replace(/\s+/g, '-');
+            filename = `ai-style-${baseSlug}-accent-${accentSlug}-${index + 1}.png`;
+        }
+        
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
