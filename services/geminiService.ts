@@ -44,25 +44,20 @@ const styleSettings: { [key: string]: string } = {
     'Formal': 'The setting is an elegant event hall with chandeliers and classic architecture.',
     'Studio Portrait': 'The setting is a professional photography studio with a neutral grey backdrop and studio lighting.',
     'Outdoor Casual': 'The setting is a vibrant street in the UAE, showcasing the modern architecture of Dubai or the cultural landmarks of Abu Dhabi, with soft, natural afternoon light.',
-    'Evening Wear': 'The setting is a sophisticated rooftop bar at night, with city lights in the background.',
-    'Cyberpunk': 'The setting is a neon-lit, futuristic city street at night, with holographic advertisements and a gritty, high-tech atmosphere.',
-    'Art Deco': 'The setting is a lavish, opulent 1920s ballroom with strong geometric patterns, gold accents, and luxurious materials.',
-    'Retro 80s': 'The setting is a vibrant, colorful arcade with classic 80s video games, neon lights, and a fun, nostalgic vibe.',
-    'Fantasy': 'The setting is an enchanted, mystical forest with glowing mushrooms, ancient trees, and soft, magical lighting.',
-    'Gothic': 'The setting is inside a grand, mysterious cathedral with towering stone arches, stained glass windows, and dramatic, moody lighting.'
+    'Evening Wear': 'The setting is a sophisticated rooftop bar at night, with city lights in the background.'
 };
 
 const variations = [
-    'A full-body shot, with the character standing in a relaxed, confident pose.',
-    'A close-up portrait shot, focusing on the details of the face and the upper part of the outfit.',
-    'A medium shot from the waist up, with the character leaning against a wall.',
-    'The character is sitting comfortably on a modern sofa in the apartment.',
-    'A wide-angle shot that captures more of the minimalist apartment interior.',
-    'A mirror selfie taken in a stylish, full-length mirror within the apartment.',
-    'A dynamic, low-angle shot looking up at the character to make the pose feel powerful.',
-    'A profile shot (from the side) showcasing the silhouette of the outfit.',
-    'A vertical (3:4) shot of the character sitting on the floor, one leg bent and the other stretched out, in a relaxed pose. The background should be minimal and clean, fitting the selected style.',
-    'A shot with a slightly blurred foreground element (like a plant) to create depth of field, focusing on the character.'
+    'Full-body shot\nThe man stands in a relaxed yet confident pose, one hand casually in his pocket, the other resting by his side. His mouth remains closed, his expression calm and grounded. The outfit falls naturally — clean lines, subtle textures catching the light. The background is minimal, letting the focus stay on his posture and overall look.',
+    'Close-up portrait\nA tight frame captures the upper part of his outfit and the quiet intensity in his eyes. The camera highlights small details — the fabric’s texture, the collar’s structure, and the light brushing across his face. His lips are closed, expression thoughtful but composed, showing confidence without a smile.',
+    'Medium waist-up shot\nHe leans slightly against a wall, one shoulder touching it, creating a casual yet refined pose. The outfit fits neatly, the sleeves or upper layers showing their texture under soft indoor lighting. His expression is calm, mouth closed, gaze slightly off-camera — as if lost in thought.',
+    'Seated on sofa\nHe sits comfortably on a modern sofa inside the apartment, one arm resting on the backrest, the other relaxed on his lap. The outfit drapes effortlessly with natural folds, reflecting a sense of comfort and style. His lips remain closed, his expression neutral, blending a sense of peace and quiet confidence.',
+    'Wide-angle interior shot\nThe camera captures him within the apartment — a minimalist space with clean lines and soft light filtering through. He stands near a window or wall, the outfit subtly contrasting with the tones of the room. Mouth closed, posture steady, his calm energy fills the wide frame without words.',
+    'Mirror selfie\nThe man stands in front of a full-length mirror, holding his phone naturally at chest level. Afternoon light hits the outfit, highlighting its fit and texture. The reflection shows a composed expression with closed lips, giving the moment an authentic, self-assured feel. The apartment background is tidy and stylish.',
+    'Low-angle dynamic shot\nThe camera is placed slightly below eye level, looking up to emphasize presence and confidence. The man stands tall, mouth closed, eyes steady, outfit structured and sharp. The angle gives him a powerful yet natural look — as if quietly owning the space without trying too hard.',
+    'Side profile shot\nA clean profile from the side, showing the sharp lines and silhouette of the outfit. His expression is calm and reflective, lips closed, gaze focused straight ahead. The background is softly blurred, keeping all attention on the outline and structure of his look.',
+    'Sitting on the floor (vertical 3:4)\nHe sits casually on the floor, one leg bent, the other stretched out. His outfit folds naturally with his movement, showing comfort and texture. The lighting is soft, creating gentle shadows. The background stays minimal, drawing focus to his relaxed pose and quiet expression, mouth closed.',
+    'Depth-of-field shot with blurred foreground\nA plant, light flare, or soft object in the foreground adds depth. The man stands or sits behind it, sharply in focus, his mouth closed and eyes calm. The outfit catches subtle highlights, and the framing feels intimate — like a candid glimpse into a quiet, stylish moment.'
 ];
 
 const getPrompt = (variation: string, style: string): string => {
@@ -70,17 +65,12 @@ const getPrompt = (variation: string, style: string): string => {
 Subject: Combine the person from image 1 with the outfit from image 2.
 Key instructions:
 - The person's face, facial features, and likeness from image 1 must be perfectly preserved.
-- The outfit from image 2 should be seamlessly and realistically placed on the person. The top from the outfit should be worn untucked with an oversized fit (like a size M).
+- The outfit from image 2 should be seamlessly and realistically placed on the person. The top from the outfit should be worn untucked with an oversized fit (like a size M). The person must also be wearing socks that are visible and match the outfit's style.
 - The person's expression must be neutral or serious. Do not show them smiling or showing teeth.
 - The final image must be exceptionally detailed, with sharp focus, and look like it was taken with a professional DSLR camera. It must be 4K quality.
 - Person details: The character is a medium-sized Moroccan man in his late 20s. He is approximately 1.75m tall and 80kg. His hair is short, dark, and curly, and he has a neatly trimmed goatee. All of his features must perfectly match the person in image 1.
 - Consistency: Maintain natural body proportions, skin tone, and hairstyle consistent with the person in image 1.`;
-
-    // The Batman graffiti variation is highly specific and should not include a style-based setting.
-    if (variation.includes('Batman graffiti')) {
-        return `${basePrompt}\nShot type: ${variation}\nEmphasize realism and high-fidelity detail in every aspect of the final photograph.`;
-    }
-
+    
     const setting = styleSettings[style] || styleSettings['Casual'];
 
     return `${basePrompt}\nSetting: ${setting}\nShot type: ${variation}\nEmphasize realism and high-fidelity detail in every aspect of the final photograph.`;
@@ -118,9 +108,9 @@ export const generateSingleStyledImage = async (
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
-            contents: {
+            contents: [{
                 parts: [personImagePart, outfitImagePart, textPart],
-            },
+            }],
             config: {
                 responseModalities: [Modality.IMAGE, Modality.TEXT],
             },
@@ -181,9 +171,9 @@ export const generateStyledImages = async (
         try {
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash-image',
-                contents: {
+                contents: [{
                     parts: [personImagePart, outfitImagePart, textPart],
-                },
+                }],
                 config: {
                     responseModalities: [Modality.IMAGE, Modality.TEXT],
                 },
