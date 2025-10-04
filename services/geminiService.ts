@@ -8,6 +8,23 @@ if (!API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
+const handleApiError = (error: unknown, context: string): Error => {
+    console.error(`Gemini API Error during ${context}:`, error);
+    const errorMessage = error instanceof Error ? error.toString() : String(error);
+
+    if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
+        return new Error("The AI is currently experiencing high traffic. Please wait a moment and try again.");
+    }
+    if (errorMessage.includes('400') || errorMessage.includes('INVALID_ARGUMENT')) {
+        return new Error("There's a problem with the request, possibly due to the uploaded images. Please try using different, high-quality images.");
+    }
+    if (errorMessage.toUpperCase().includes('SAFETY')) {
+        return new Error("The request was blocked for safety reasons. Please try using different images.");
+    }
+
+    return new Error("An unexpected error occurred while communicating with the AI. Please try again.");
+};
+
 const fileToBase64 = (file: File): Promise<{mimeType: string, data: string}> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -39,7 +56,7 @@ const variations = [
     'A mirror selfie taken in a stylish, full-length mirror within the apartment.',
     'A dynamic, low-angle shot looking up at the character to make the pose feel powerful.',
     'A profile shot (from the side) showcasing the silhouette of the outfit.',
-    'An over-the-shoulder perspective, as if someone is looking at the character from behind.',
+    'A mirror selfie, with the character sitting on the floor or a low stool.',
     'A shot with a slightly blurred foreground element (like a plant) to create depth of field, focusing on the character.'
 ];
 
@@ -50,7 +67,7 @@ Key instructions:
 - The person's face, facial features, and likeness from image 1 must be perfectly preserved.
 - The outfit from image 2 should be seamlessly and realistically placed on the person.
 - The final image must be exceptionally detailed, with sharp focus, and look like it was taken with a professional DSLR camera. It must be 4K quality.
-- Person details: The character is a 28-year-old Moroccan man, 1.75 m tall, 80kg, with a mesomorph build (balanced, confident frame). He has short dark brown curly hair in a mid-fade haircut, a compact neck, green-brown eyes, and a neatly trimmed goatee. His arms have a light natural hair.
+- Person details: The character is a medium-sized Moroccan man in his late 20s. He is approximately 1.75m tall and 80kg. His hair is short, dark, and curly, and he has a neatly trimmed goatee. All of his features must perfectly match the person in image 1.
 - Consistency: Maintain natural body proportions, skin tone, and hairstyle consistent with the person in image 1.`;
 
     const setting = styleSettings[style] || styleSettings['Casual'];
@@ -87,22 +104,31 @@ export const generateSingleStyledImage = async (
         text: getPrompt(variations[variationIndex], style),
     };
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-            parts: [personImagePart, outfitImagePart, textPart],
-        },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
-    });
-    
-    const imagePart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
-    if (imagePart?.inlineData) {
-        const { data, mimeType } = imagePart.inlineData;
-        return `data:${mimeType};base64,${data}`;
-    } else {
-        throw new Error(`API response for redo image did not contain an image part.`);
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [personImagePart, outfitImagePart, textPart],
+            },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        });
+        
+        const imagePart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
+        if (imagePart?.inlineData) {
+            const { data, mimeType } = imagePart.inlineData;
+            return `data:${mimeType};base64,${data}`;
+        } else {
+            const blockReason = response.candidates?.[0]?.finishReason;
+            console.error("Image generation failed. Block Reason:", blockReason, "Safety Ratings:", response.candidates?.[0]?.safetyRatings);
+            if (blockReason === 'SAFETY') {
+                 throw new Error("Image generation was blocked for safety reasons. Please try different images.");
+            }
+            throw new Error(`The AI failed to produce an image. This can happen sometimes, please try redoing it.`);
+        }
+    } catch (error) {
+        throw handleApiError(error, `single image generation (variation ${variationIndex})`);
     }
 };
 
@@ -140,27 +166,36 @@ export const generateStyledImages = async (
         const textPart = {
             text: getPrompt(currentVariation, style),
         };
-
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: {
-                parts: [personImagePart, outfitImagePart, textPart],
-            },
-            config: {
-                responseModalities: [Modality.IMAGE, Modality.TEXT],
-            },
-        });
         
-        const imagePart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
-        if (imagePart?.inlineData) {
-            const { data, mimeType } = imagePart.inlineData;
-            const imageUrl = `data:${mimeType};base64,${data}`;
-            generatedImages.push(imageUrl);
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: {
+                    parts: [personImagePart, outfitImagePart, textPart],
+                },
+                config: {
+                    responseModalities: [Modality.IMAGE, Modality.TEXT],
+                },
+            });
             
-            const progress = (i + 1) / totalImages;
-            onImageGenerated(imageUrl, progress);
-        } else {
-            throw new Error(`API response for image ${i + 1} did not contain an image part.`);
+            const imagePart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
+            if (imagePart?.inlineData) {
+                const { data, mimeType } = imagePart.inlineData;
+                const imageUrl = `data:${mimeType};base64,${data}`;
+                generatedImages.push(imageUrl);
+                
+                const progress = (i + 1) / totalImages;
+                onImageGenerated(imageUrl, progress);
+            } else {
+                const blockReason = response.candidates?.[0]?.finishReason;
+                console.error(`Image generation failed for image ${i + 1}. Block Reason:`, blockReason, "Safety Ratings:", response.candidates?.[0]?.safetyRatings);
+                 if (blockReason === 'SAFETY') {
+                     throw new Error(`Image ${i + 1} was blocked for safety reasons. Please start over with different images.`);
+                }
+                throw new Error(`The AI failed to generate image ${i + 1}. Please try again.`);
+            }
+        } catch(error) {
+            throw handleApiError(error, `bulk image generation (image ${i + 1})`);
         }
     }
     

@@ -54,7 +54,8 @@ const App: React.FC = () => {
             await generateStyledImages(personImage, outfitImage, selectedStyle, onImageGenerated);
         } catch (err) {
             console.error(err);
-            setError("Failed to generate images. Please check the console for details and try again.");
+            const errorMessage = err instanceof Error ? err.message : "An unknown error occurred. Please check the console for details.";
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -75,9 +76,11 @@ const App: React.FC = () => {
                 newImages[index] = newImageUrl;
                 return newImages;
             });
+            setError(null); // Clear previous errors on success
         } catch (err) {
             console.error(err);
-            setError(`Failed to redo image ${index + 1}. Please try again.`);
+            const errorMessage = err instanceof Error ? err.message : "An unknown error occurred while redoing the image.";
+            setError(errorMessage);
         }
     }, [personImage, outfitImage, selectedStyle]);
 
