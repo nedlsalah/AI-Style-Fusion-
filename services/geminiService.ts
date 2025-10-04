@@ -61,7 +61,7 @@ const variations = [
     'A mirror selfie taken in a stylish, full-length mirror within the apartment.',
     'A dynamic, low-angle shot looking up at the character to make the pose feel powerful.',
     'A profile shot (from the side) showcasing the silhouette of the outfit.',
-    'A hyper-realistic vertical (3:4) mirror selfie of the person sitting on a marble floor in a morning sunbeam. One leg is bent, the other stretched out. They are holding an iPhone near their face to take the picture. Behind them is a wall with Batman graffiti. The image must have sharp focus, 8K quality, warm cinematic light, and an urban cool vibe.',
+    'A vertical (3:4) shot of the character sitting on the floor, one leg bent and the other stretched out, in a relaxed pose. The background should be minimal and clean, fitting the selected style.',
     'A shot with a slightly blurred foreground element (like a plant) to create depth of field, focusing on the character.'
 ];
 
