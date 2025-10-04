@@ -44,7 +44,12 @@ const styleSettings: { [key: string]: string } = {
     'Formal': 'The setting is an elegant event hall with chandeliers and classic architecture.',
     'Studio Portrait': 'The setting is a professional photography studio with a neutral grey backdrop and studio lighting.',
     'Outdoor Casual': 'The setting is a vibrant street in the UAE, showcasing the modern architecture of Dubai or the cultural landmarks of Abu Dhabi, with soft, natural afternoon light.',
-    'Evening Wear': 'The setting is a sophisticated rooftop bar at night, with city lights in the background.'
+    'Evening Wear': 'The setting is a sophisticated rooftop bar at night, with city lights in the background.',
+    'Cyberpunk': 'The setting is a neon-lit, futuristic city street at night, with holographic advertisements and a gritty, high-tech atmosphere.',
+    'Art Deco': 'The setting is a lavish, opulent 1920s ballroom with strong geometric patterns, gold accents, and luxurious materials.',
+    'Retro 80s': 'The setting is a vibrant, colorful arcade with classic 80s video games, neon lights, and a fun, nostalgic vibe.',
+    'Fantasy': 'The setting is an enchanted, mystical forest with glowing mushrooms, ancient trees, and soft, magical lighting.',
+    'Gothic': 'The setting is inside a grand, mysterious cathedral with towering stone arches, stained glass windows, and dramatic, moody lighting.'
 };
 
 const variations = [

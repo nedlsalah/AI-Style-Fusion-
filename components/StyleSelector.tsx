@@ -10,7 +10,12 @@ const styles = [
     'Formal',
     'Studio Portrait',
     'Outdoor Casual',
-    'Evening Wear'
+    'Evening Wear',
+    'Cyberpunk',
+    'Art Deco',
+    'Retro 80s',
+    'Fantasy',
+    'Gothic'
 ];
 
 export const StyleSelector: React.FC<StyleSelectorProps> = ({ selectedStyle, onStyleChange }) => {
